@@ -43,16 +43,15 @@ install_docker() {
     fi
 }
 
-# Install Git if needed
+# Function to check and install Git if needed
 install_git() {
-    echo "Do you need to install Git? (y/n)"
-    read -r install_git
-    if [[ "$install_git" == "y" ]]; then
-        echo "Installing Git..."
-        apt install -y git
+    echo "Checking for Git..."
+    if ! command -v git &> /dev/null; then
+        echo "Git not found. Starting Git installation."
+        apt update && apt install -y git
         echo "Git installation completed."
     else
-        echo "Skipping Git installation."
+        echo "Git is already installed."
     fi
 }
 
