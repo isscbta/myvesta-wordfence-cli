@@ -20,17 +20,22 @@ install_docker() {
     echo "Checking for Docker..."
     if ! command -v docker &> /dev/null; then
         echo "Docker not found. Starting Docker installation."
-        apt update && apt-get install -y ca-certificates curl && \
+        apt update
+        apt-get install -y ca-certificates curl
         install -m 0755 -d /etc/apt/keyrings && \
         curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
         chmod a+r /etc/apt/keyrings/docker.asc && \
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
-        apt update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && \
+        apt update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        if ! command -v docker &> /dev/null; then
+            echo "Error installing docker !!!";
+            exit;
+        fi
+        newgrp docker
         curl -s https://api.github.com/repos/docker/compose/releases/latest | grep browser_download_url | grep docker-compose-linux-x86_64 | cut -d '"' -f 4 | wget -qi - && \
         chmod +x docker-compose-linux-x86_64 && \
-        mv docker-compose-linux-x86_64 /usr/local/bin/docker-compose && \
-        docker-compose version && \
-        newgrp docker && \
+        mv docker-compose-linux-x86_64 /usr/local/bin/docker-compose
+        # docker-compose version
         systemctl restart docker
         echo "Docker installation completed."
     else
