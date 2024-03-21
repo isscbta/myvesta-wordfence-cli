@@ -29,7 +29,7 @@ install_docker() {
         apt update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         if ! command -v docker &> /dev/null; then
             echo "Error installing docker !!!";
-            exit;
+            exit 1;
         fi
         newgrp docker
         curl -s https://api.github.com/repos/docker/compose/releases/latest | grep browser_download_url | grep docker-compose-linux-x86_64 | cut -d '"' -f 4 | wget -qi - && \
