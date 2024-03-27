@@ -83,8 +83,13 @@ install_wordfence_cli() {
 # Final setup steps
 final_setup() {
     wget https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/main/bin/v-wf-malware-scan -O /root/vesta/bin/v-wf-malware-scan
+    wget https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/main/bin/v-wf-vulnerability-scan -O /root/vesta/bin/v-wf-vulnerability-scan
     chmod a+x /root/vesta/bin/v-wf-malware-scan
+    chmod a+x /root/vesta/bin/v-wf-vulnerability-scan
     echo "WordFence CLI is ready to use."
+    echo "Use v-wf-malware-scan \$DOMAIN for malware scanning."
+    echo "Use v-wf-vulnerability-scan \$DOMAIN for vulnerability scanning."
+    echo "Append '--banner', etc., at the end of the command to include additional parameters. A full list of parameters can be found on the WordFence CLI documentation page."
 }
 
 # Main installation process
