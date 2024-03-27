@@ -87,8 +87,8 @@ final_setup() {
     chmod a+x /root/vesta/bin/v-wf-malware-scan
     chmod a+x /root/vesta/bin/v-wf-vulnerability-scan
     echo "WordFence CLI is ready to use."
-    echo "Use v-wf-malware-scan \$DOMAIN for malware scanning."
-    echo "Use v-wf-vulnerability-scan \$DOMAIN for vulnerability scanning."
+    echo "Use v-wf-malware-scan DOMAIN for malware scanning."
+    echo "Use v-wf-vulnerability-scan DOMAIN for vulnerability scanning."
     echo "Append '--banner', etc., at the end of the command to include additional parameters. A full list of parameters can be found on the WordFence CLI documentation page."
 }
 
