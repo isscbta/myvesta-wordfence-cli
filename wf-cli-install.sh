@@ -68,20 +68,22 @@ install_wordfence_cli() {
     docker build -t wordfence-cli:latest .
     echo "WordFence CLI installation completed."
 
-    echo "Starting WordFence CLI configuration..."
-    docker run -it -v /var/www:/var/www wordfence-cli:latest configure
-    CONFCONTAINER=$(docker ps -a | grep 'wordfence configure' | head -n 1 | awk '{print $NF}')
-    docker start "$CONFCONTAINER"
-    CONFCONTENT=$(docker exec -it "$CONFCONTAINER" cat ~/.config/wordfence/wordfence-cli.ini)
-    docker stop "$CONFCONTAINER"
-    
-    mkdir -p ~/wfcli-conf
-    echo "$CONFCONTENT" > ~/wfcli-conf/wordfence-cli.ini
-    if [ -s ~/wfcli-conf/wordfence-cli.ini ]; then
-        echo "WordFence CLI configuration completed successfully."
-        cat ~/wfcli-conf/wordfence-cli.ini
-    else
-        echo "WordFence CLI configuration failed. The configuration file is empty or missing."
+    if [ ! -d "/root/wfcli-conf" ]; then
+        echo "Starting WordFence CLI configuration..."
+        docker run -it -v /var/www:/var/www wordfence-cli:latest configure
+        CONFCONTAINER=$(docker ps -a | grep 'wordfence configure' | head -n 1 | awk '{print $NF}')
+        docker start "$CONFCONTAINER"
+        CONFCONTENT=$(docker exec -it "$CONFCONTAINER" cat ~/.config/wordfence/wordfence-cli.ini)
+        docker stop "$CONFCONTAINER"
+        
+        mkdir -p ~/wfcli-conf
+        echo "$CONFCONTENT" > ~/wfcli-conf/wordfence-cli.ini
+        if [ -s ~/wfcli-conf/wordfence-cli.ini ]; then
+            echo "WordFence CLI configuration completed successfully."
+            cat ~/wfcli-conf/wordfence-cli.ini
+        else
+            echo "WordFence CLI configuration failed. The configuration file is empty or missing."
+        fi
     fi
 }
 
