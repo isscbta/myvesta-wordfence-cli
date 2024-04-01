@@ -96,9 +96,18 @@ final_setup() {
     cp /root/vesta/bin/v-wf-malware-scan /usr/local/vesta/bin/v-wf-malware-scan
     cp /root/vesta/bin/v-wf-vulnerability-scan /usr/local/vesta/bin/v-wf-vulnerability-scan
     echo "WordFence CLI is ready to use."
-    echo "Use v-wf-malware-scan DOMAIN for malware scanning."
-    echo "Use v-wf-vulnerability-scan DOMAIN for vulnerability scanning."
-    echo "Append '--banner', etc., at the end of the command to include additional parameters. A full list of parameters can be found on the WordFence CLI documentation page."
+    echo "==============================="
+    echo ""
+    echo "Use:"
+    echo "v-wf-malware-scan DOMAIN"
+    echo "... for malware scanning."
+    echo ""
+    echo "Use:"
+    echo "v-wf-vulnerability-scan DOMAIN"
+    echo " ... for vulnerability scanning."
+    echo ""
+    echo "Append --progress, --banner, etc., at the end of the command to include additional parameters. A full list of parameters can be found on the WordFence CLI documentation page."
+    echo "==============================="
 }
 
 # Main installation process
