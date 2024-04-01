@@ -91,10 +91,13 @@ install_wordfence_cli() {
 final_setup() {
     wget https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/main/bin/v-wf-malware-scan -O /root/vesta/bin/v-wf-malware-scan
     wget https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/main/bin/v-wf-vulnerability-scan -O /root/vesta/bin/v-wf-vulnerability-scan
+    wget https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/main/bin/v-wf-remediate -O /root/vesta/bin/v-wf-remediate
     chmod a+x /root/vesta/bin/v-wf-malware-scan
     chmod a+x /root/vesta/bin/v-wf-vulnerability-scan
+    chmod a+x /root/vesta/bin/v-wf-remediate
     cp /root/vesta/bin/v-wf-malware-scan /usr/local/vesta/bin/v-wf-malware-scan
     cp /root/vesta/bin/v-wf-vulnerability-scan /usr/local/vesta/bin/v-wf-vulnerability-scan
+    cp /root/vesta/bin/v-wf-remediate /usr/local/vesta/bin/v-wf-remediate
     echo "WordFence CLI is ready to use."
     echo "==============================="
     echo ""
@@ -104,9 +107,14 @@ final_setup() {
     echo ""
     echo "Use:"
     echo "v-wf-vulnerability-scan DOMAIN"
-    echo " ... for vulnerability scanning."
+    echo "... for vulnerability scanning."
+    echo ""
+    echo "Use:"
+    echo "v-wf-remediate DOMAIN"
+    echo "... for automatically repairing known files belonging to a WordPress installation"
     echo ""
     echo "Append --progress, --banner, etc., at the end of the command to include additional parameters. A full list of parameters can be found on the WordFence CLI documentation page."
+    echo ""
     echo "==============================="
 }
 
