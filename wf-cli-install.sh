@@ -58,8 +58,13 @@ install_git() {
 # Install and configure WordFence CLI
 install_wordfence_cli() {
     echo "Starting WordFence CLI installation..."
-    cd ~ && git clone https://github.com/wordfence/wordfence-cli.git
-    cd ~/wordfence-cli
+    if [ -d "~/wordfence-cli" ]; then
+        cd ~/wordfence-cli
+        git pull
+    else
+        cd ~ && git clone https://github.com/wordfence/wordfence-cli.git
+        cd ~/wordfence-cli
+    fi
     docker build -t wordfence-cli:latest .
     echo "WordFence CLI installation completed."
 
