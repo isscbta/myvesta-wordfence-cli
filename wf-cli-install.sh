@@ -58,8 +58,8 @@ install_git() {
 # Install and configure WordFence CLI
 install_wordfence_cli() {
     echo "Starting WordFence CLI installation..."
-    if [ -d "~/wordfence-cli" ]; then
-        cd ~/wordfence-cli
+    if [ -d "/root/wordfence-cli" ]; then
+        cd /root/wordfence-cli
         git pull
     else
         cd ~ && git clone https://github.com/wordfence/wordfence-cli.git
