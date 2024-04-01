@@ -19,10 +19,10 @@ if [ -z "$USER" ]; then
     exit 1
 fi
 
-# Construct the scan path
+# Construct the path
 SCAN="/home/$USER/web/$DOMAIN/public_html"
 
-echo "Starting Wordfence malware scan for $DOMAIN at $SCAN"
+echo "Starting file remediation for $DOMAIN at $SCAN"
 
 # Change directory to where Docker commands can be executed
 cd /root/wordfence-cli
