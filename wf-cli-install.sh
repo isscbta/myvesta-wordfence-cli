@@ -29,7 +29,8 @@ install_docker() {
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
         echo "= Installing docker"
         apt update > /dev/null 2>&1
-        apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        apt-get install -y docker-ce docker-ce-cli containerd.io
+        apt-get install -y docker-buildx-plugin docker-compose-plugin
         if ! command -v docker &> /dev/null; then
             echo "- Error installing docker !!!";
             exit 1;
