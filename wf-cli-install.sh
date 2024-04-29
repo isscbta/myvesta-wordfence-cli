@@ -35,8 +35,8 @@ install_docker() {
             echo "- Error installing docker !!!";
             exit 1;
         fi
-        echo "= Creating docker group"
-        newgrp docker
+        # echo "= Creating docker group"
+        # newgrp docker
         echo "= Installing docker-compose"
         curl -s https://api.github.com/repos/docker/compose/releases/latest | grep browser_download_url | grep docker-compose-linux-x86_64 | cut -d '"' -f 4 | wget -qi - && \
         chmod +x docker-compose-linux-x86_64 && \
