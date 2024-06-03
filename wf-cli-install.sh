@@ -21,16 +21,28 @@ install_docker() {
     if ! command -v docker &> /dev/null; then
         echo "= Docker not found. Starting Docker installation."
         apt update > /dev/null 2>&1
-        apt-get install -y ca-certificates curl > /dev/null 2>&1
-        echo "= Installing docker repo"
-        install -m 0755 -d /etc/apt/keyrings && \
-        curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
-        chmod a+r /etc/apt/keyrings/docker.asc && \
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-        echo "= Installing docker"
-        apt update > /dev/null 2>&1
-        apt-get install -y docker-ce docker-ce-cli containerd.io
-        apt-get install -y docker-buildx-plugin docker-compose-plugin
+
+        release=$(cat /etc/debian_version | tr "." "\n" | head -n1)
+        if [ "$release" -gt 10 ]; then
+            # Debian > 10
+            apt-get install -y ca-certificates curl > /dev/null 2>&1
+            echo "= Installing docker repo"
+            install -m 0755 -d /etc/apt/keyrings && \
+            curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
+            chmod a+r /etc/apt/keyrings/docker.asc && \
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+            echo "= Installing docker"
+            apt update > /dev/null 2>&1
+            apt-get install -y docker-ce docker-ce-cli containerd.io
+            apt-get install -y docker-buildx-plugin docker-compose-plugin
+        else
+            # Debian < 11
+            apt install apt-transport-https ca-certificates curl gnupg2 software-properties-common
+            curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+            add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+            apt update > /dev/null 2>&1
+            apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        fi
         if ! command -v docker &> /dev/null; then
             echo "- Error installing docker !!!";
             exit 1;
