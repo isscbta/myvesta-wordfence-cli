@@ -20,7 +20,7 @@ install_docker() {
     echo "= Checking for Docker..."
     if ! command -v docker &> /dev/null; then
         echo "= Docker not found. Starting Docker installation."
-        apt update > /dev/null 2>&1
+        apt-get update > /dev/null 2>&1
 
         release=$(cat /etc/debian_version | tr "." "\n" | head -n1)
         if [ "$release" -gt 10 ]; then
@@ -32,7 +32,7 @@ install_docker() {
             chmod a+r /etc/apt/keyrings/docker.asc && \
             echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
             echo "= Installing docker"
-            apt update > /dev/null 2>&1
+            apt-get update > /dev/null 2>&1
             apt-get install -y docker-ce docker-ce-cli containerd.io
             apt-get install -y docker-buildx-plugin docker-compose-plugin
         else
@@ -40,7 +40,7 @@ install_docker() {
             apt install apt-transport-https ca-certificates curl gnupg2 software-properties-common
             curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
             add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
-            apt update > /dev/null 2>&1
+            apt-get update > /dev/null 2>&1
             apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         fi
         if ! command -v docker &> /dev/null; then
@@ -66,8 +66,8 @@ install_git() {
     echo "= Checking for Git..."
     if ! command -v git &> /dev/null; then
         echo "= Git not found. Starting Git installation."
-        apt update > /dev/null 2>&1
-        apt install -y git
+        apt-get update > /dev/null 2>&1
+        apt-get install -y git
         echo "= Git installation completed."
     else
         echo "= Git is already installed."
