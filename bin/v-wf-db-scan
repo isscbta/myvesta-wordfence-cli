@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Check if domain name is provided
+if [ -z "$1" ]; then
+    echo "Error: Domain name is required"
+    exit 1
+fi
+
+# Get the domain name
+DOMAIN=$1
+
+# Shift off the first argument (domain name) to process additional flags
+shift
+
+# Use v-search-domain-owner to find the user associated with the domain
+USER=$(v-search-domain-owner $DOMAIN)
+if [ -z "$USER" ]; then
+    echo "Error: Unable to find user for domain $DOMAIN"
+    exit 1
+fi
+
+# Construct the WordPress path
+WP_PATH="/home/$USER/web/$DOMAIN/public_html"
+
+if [ ! -d "$WP_PATH" ]; then
+    echo "Error: WordPress directory not found for $DOMAIN at $WP_PATH"
+    exit 1
+fi
+
+echo "Starting Wordfence database scan for $DOMAIN at $WP_PATH"
+
+# Change directory to where Docker commands can be executed
+cd /root/wordfence-cli
+
+# Run Wordfence DB scan using Docker with the WordPress path
+docker run -it \
+    -v /root/wfcli-conf/wordfence-cli.ini:/root/.config/wordfence/wordfence-cli.ini \
+    wordfence-cli:latest db-scan \
+    -S $WP_PATH \
+    --output-format csv \
+    --output-path $WP_PATH/wordfence-db-scan.csv "$@"
+
+# Removing container
+docker container rm $(docker container ls -a | grep 'wordfence' | awk '{print $1}') > /dev/null 2>&1
+
+# Display scan results
+SCAN_RESULTS="$WP_PATH/wordfence-db-scan.csv"
+
+if [ -s $SCAN_RESULTS ]; then
+    echo "=== Database scan results for $DOMAIN ==="
+    cat $SCAN_RESULTS
+    echo "======"
+    echo "The file with the list of all results can be found at: $SCAN_RESULTS"
+    chown $USER:$USER $SCAN_RESULTS
+else
+    echo "No issues were found in the database for $DOMAIN."
+    rm $SCAN_RESULTS
+fi
