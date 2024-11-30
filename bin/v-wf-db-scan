@@ -71,4 +71,5 @@ docker run -it \
 
 
 # Clean up any exited Wordfence containers
-docker container prune -f --filter "label=wordfence-cli"
+docker container rm $(docker container ls -a | grep 'wordfence' | awk '{print $1}') > /dev/null 2>&1
+
