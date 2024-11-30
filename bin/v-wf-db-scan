@@ -59,14 +59,16 @@ echo "Starting Wordfence database scan for $DOMAIN"
 
 # Run Wordfence DB scan using the custom Docker image with extracted database credentials
 docker run -it \
+    --network=host \
     -v /root/wfcli-conf:/root/.config/wordfence \
     -e WFCLI_DB_PASSWORD="$DB_PASSWORD" \
-    custom-wordfence-cli db-scan \
+    custom-wordfence-cli db-scan --debug \
     -u "$DB_USER" \
     -H "$DB_HOST" \
     -D "$DB_NAME" \
     --port "$DB_PORT" \
     --prefix "$DB_PREFIX" "$@"
+
 
 # Clean up any exited Wordfence containers
 docker container prune -f --filter "label=wordfence-cli"
