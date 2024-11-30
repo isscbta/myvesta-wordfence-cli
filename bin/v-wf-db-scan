@@ -13,46 +13,60 @@ DOMAIN=$1
 shift
 
 # Use v-search-domain-owner to find the user associated with the domain
-USER=$(v-search-domain-owner $DOMAIN)
+USER=$(v-search-domain-owner "$DOMAIN")
+echo "Extracted USER: $USER"
 if [ -z "$USER" ]; then
     echo "Error: Unable to find user for domain $DOMAIN"
     exit 1
 fi
 
-# Construct the WordPress path
-WP_PATH="/home/$USER/web/$DOMAIN/public_html"
+# Locate WordPress configuration file for the domain
+WP_CONFIG="/home/$USER/web/$DOMAIN/public_html/wp-config.php"
+echo "Looking for wp-config.php at: $WP_CONFIG"
 
-if [ ! -d "$WP_PATH" ]; then
-    echo "Error: WordPress directory not found for $DOMAIN at $WP_PATH"
+if [ ! -f "$WP_CONFIG" ]; then
+    echo "Error: wp-config.php not found for $DOMAIN at expected location $WP_CONFIG"
     exit 1
 fi
 
-echo "Starting Wordfence database scan for $DOMAIN at $WP_PATH"
+# Extract database connection details from wp-config.php
+DB_NAME=$(grep "DB_NAME" "$WP_CONFIG" | cut -d "'" -f 4)
+DB_USER=$(grep "DB_USER" "$WP_CONFIG" | cut -d "'" -f 4)
+DB_PASSWORD=$(grep "DB_PASSWORD" "$WP_CONFIG" | cut -d "'" -f 4)
+DB_PREFIX=$(grep "\$table_prefix" "$WP_CONFIG" | cut -d "'" -f 2)
 
-# Change directory to where Docker commands can be executed
-cd /root/wordfence-cli
+# Set MySQL port and determine the host IP accessible from Docker
+DB_PORT=3306
 
-# Run Wordfence DB scan using Docker with the WordPress path
-docker run -it \
-    -v /root/wfcli-conf/wordfence-cli.ini:/root/.config/wordfence/wordfence-cli.ini \
-    wordfence-cli:latest db-scan \
-    -S $WP_PATH \
-    --output-format csv \
-    --output-path $WP_PATH/wordfence-db-scan.csv "$@"
+# Determine the host's IP address accessible from the Docker container
+HOST_IP=$(docker run --rm alpine ip route | grep default | awk '{print $3}')
+DB_HOST=$HOST_IP
 
-# Removing container
-docker container rm $(docker container ls -a | grep 'wordfence' | awk '{print $1}') > /dev/null 2>&1
+echo "Extracted DB_NAME: $DB_NAME"
+echo "Extracted DB_USER: $DB_USER"
+echo "Extracted DB_PASSWORD: $DB_PASSWORD"
+echo "Updated DB_HOST: $DB_HOST"
+echo "Extracted DB_PREFIX: $DB_PREFIX"
+echo "Using MySQL Port: $DB_PORT"
 
-# Display scan results
-SCAN_RESULTS="$WP_PATH/wordfence-db-scan.csv"
-
-if [ -s $SCAN_RESULTS ]; then
-    echo "=== Database scan results for $DOMAIN ==="
-    cat $SCAN_RESULTS
-    echo "======"
-    echo "The file with the list of all results can be found at: $SCAN_RESULTS"
-    chown $USER:$USER $SCAN_RESULTS
-else
-    echo "No issues were found in the database for $DOMAIN."
-    rm $SCAN_RESULTS
+# Validate extracted values
+if [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ] || [ -z "$DB_PREFIX" ]; then
+    echo "Error: Unable to extract all necessary database credentials from wp-config.php"
+    exit 1
 fi
+
+echo "Starting Wordfence database scan for $DOMAIN"
+
+# Run Wordfence DB scan using the custom Docker image with extracted database credentials
+docker run -it \
+    -v /root/wfcli-conf:/root/.config/wordfence \
+    -e WFCLI_DB_PASSWORD="$DB_PASSWORD" \
+    custom-wordfence-cli db-scan \
+    -u "$DB_USER" \
+    -H "$DB_HOST" \
+    -D "$DB_NAME" \
+    --port "$DB_PORT" \
+    --prefix "$DB_PREFIX" "$@"
+
+# Clean up any exited Wordfence containers
+docker container prune -f --filter "label=wordfence-cli"
