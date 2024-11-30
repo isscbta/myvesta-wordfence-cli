@@ -62,7 +62,7 @@ docker run -it \
     --network=host \
     -v /root/wfcli-conf:/root/.config/wordfence \
     -e WFCLI_DB_PASSWORD="$DB_PASSWORD" \
-    custom-wordfence-cli db-scan --debug \
+    custom-wordfence-cli db-scan \
     -u "$DB_USER" \
     -H "$DB_HOST" \
     -D "$DB_NAME" \
