@@ -111,12 +111,15 @@ final_setup() {
     wget https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/main/bin/v-wf-malware-scan -O /root/vesta/bin/v-wf-malware-scan
     wget https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/main/bin/v-wf-vulnerability-scan -O /root/vesta/bin/v-wf-vulnerability-scan
     wget https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/main/bin/v-wf-remediate -O /root/vesta/bin/v-wf-remediate
+    wget https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/main/bin/v-wf-db-scan -O /root/vesta/bin/v-wf-db-scan
     chmod a+x /root/vesta/bin/v-wf-malware-scan
     chmod a+x /root/vesta/bin/v-wf-vulnerability-scan
     chmod a+x /root/vesta/bin/v-wf-remediate
+    chmod a+x /root/vesta/bin/v-wf-db-scan
     cp /root/vesta/bin/v-wf-malware-scan /usr/local/vesta/bin/v-wf-malware-scan
     cp /root/vesta/bin/v-wf-vulnerability-scan /usr/local/vesta/bin/v-wf-vulnerability-scan
     cp /root/vesta/bin/v-wf-remediate /usr/local/vesta/bin/v-wf-remediate
+    cp /root/vesta/bin/v-wf-db-scan /usr/local/vesta/bin/v-wf-db-scan
     echo "==============================="
     echo "WordFence CLI is ready to use."
     echo "==============================="
