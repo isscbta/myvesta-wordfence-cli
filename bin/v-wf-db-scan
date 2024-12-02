@@ -20,27 +20,34 @@ if [ -z "$USER" ]; then
     exit 1
 fi
 
-# Locate WordPress configuration file for the domain
-WP_CONFIG="/home/$USER/web/$DOMAIN/public_html/wp-config.php"
-echo "Looking for wp-config.php at: $WP_CONFIG"
-
-if [ ! -f "$WP_CONFIG" ]; then
-    echo "Error: wp-config.php not found for $DOMAIN at expected location $WP_CONFIG"
+# Use v-get-database-credentials-of-domain to extract database connection details
+DB_CREDENTIALS=$(v-get-database-credentials-of-domain "$DOMAIN")
+if [ $? -ne 0 ] || [ -z "$DB_CREDENTIALS" ]; then
+    echo "Error: Unable to retrieve database credentials for $DOMAIN"
     exit 1
 fi
 
-# Extract database connection details from wp-config.php
-DB_NAME=$(grep "DB_NAME" "$WP_CONFIG" | cut -d "'" -f 4)
-DB_USER=$(grep "DB_USER" "$WP_CONFIG" | cut -d "'" -f 4)
-DB_PASSWORD=$(grep "DB_PASSWORD" "$WP_CONFIG" | cut -d "'" -f 4)
-DB_PREFIX=$(grep "\$table_prefix" "$WP_CONFIG" | cut -d "'" -f 2)
+# Parse the credentials
+DB_NAME=$(echo "$DB_CREDENTIALS" | grep "DATABASE_NAME='" | cut -d "'" -f 2)
+DB_USER=$(echo "$DB_CREDENTIALS" | grep "DATABASE_USERNAME='" | cut -d "'" -f 2)
+DB_PASSWORD=$(echo "$DB_CREDENTIALS" | grep "DATABASE_PASSWORD='" | cut -d "'" -f 2)
 
-# Set MySQL port and determine the host IP accessible from Docker
+# Set MySQL port
 DB_PORT=3306
 
 # Determine the host's IP address accessible from the Docker container
 HOST_IP=$(docker run --rm alpine ip route | grep default | awk '{print $3}')
 DB_HOST=$HOST_IP
+
+# Locate the wp-config.php file and extract the table prefix
+WP_CONFIG=$(echo "$DB_CREDENTIALS" | grep "CONFIG_FILE_FULL_PATH='" | cut -d "'" -f 2)
+DB_PREFIX=$(grep "\$table_prefix" "$WP_CONFIG" | cut -d "'" -f 2)
+
+# Validate extracted values
+if [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ] || [ -z "$DB_PREFIX" ]; then
+    echo "Error: Unable to extract all necessary database credentials"
+    exit 1
+fi
 
 echo "Extracted DB_NAME: $DB_NAME"
 echo "Extracted DB_USER: $DB_USER"
@@ -48,12 +55,6 @@ echo "Extracted DB_PASSWORD: $DB_PASSWORD"
 echo "Updated DB_HOST: $DB_HOST"
 echo "Extracted DB_PREFIX: $DB_PREFIX"
 echo "Using MySQL Port: $DB_PORT"
-
-# Validate extracted values
-if [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ] || [ -z "$DB_PREFIX" ]; then
-    echo "Error: Unable to extract all necessary database credentials from wp-config.php"
-    exit 1
-fi
 
 echo "Starting Wordfence database scan for $DOMAIN"
 
@@ -69,7 +70,5 @@ docker run -it \
     --port "$DB_PORT" \
     --prefix "$DB_PREFIX" "$@"
 
-
 # Clean up any exited Wordfence containers
 docker container rm $(docker container ls -a | grep 'wordfence' | awk '{print $1}') > /dev/null 2>&1
-
