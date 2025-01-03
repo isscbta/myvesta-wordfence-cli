@@ -15,6 +15,8 @@ echo -e "\n\n"
 echo 'Following software will be installed on your system:'
 echo '   - WordFence CLI'
 
+CURDIR=$(pwd)
+
 # Function to install Docker
 install_docker() {
     echo "= Checking for Docker..."
@@ -108,6 +110,7 @@ install_wordfence_cli() {
 
 # Final setup steps
 final_setup() {
+    cd $CURDIR
     cp bin/v-wf-malware-scan /usr/local/vesta/bin/v-wf-malware-scan
     cp bin/v-wf-vulnerability-scan /usr/local/vesta/bin/v-wf-vulnerability-scan
     cp bin/v-wf-remediate /usr/local/vesta/bin/v-wf-remediate
