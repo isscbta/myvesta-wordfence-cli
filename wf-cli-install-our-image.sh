@@ -75,7 +75,7 @@ install_wordfence_cli() {
     }
 
     # Tag the pulled image locally as 'wordfence-cli:latest'
-    docker tag  isscbta/wordfence-cli:with-vectorscan-amd64 wordfence-cli:latest
+    docker tag isscbta/wordfence-cli:with-vectorscan-amd64 wordfence-cli:latest
 
     echo "= WordFence CLI installation completed."
 
