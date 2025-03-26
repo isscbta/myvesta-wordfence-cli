@@ -107,15 +107,16 @@ install_wordfence_cli() {
 
 # Final setup steps
 final_setup() {
-    cd $CURDIR
-    cp bin/v-wf-malware-scan /usr/local/vesta/bin/v-wf-malware-scan
-    cp bin/v-wf-vulnerability-scan /usr/local/vesta/bin/v-wf-vulnerability-scan
-    cp bin/v-wf-remediate /usr/local/vesta/bin/v-wf-remediate
-    cp bin/v-wf-db-scan /usr/local/vesta/bin/v-wf-db-scan
+    wget -q -O /usr/local/vesta/bin/v-wf-malware-scan https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin/v-wf-malware-scan
+    wget -q -O /usr/local/vesta/bin/v-wf-malware-hyperscan https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin/v-wf-malware-hyperscan
+    wget -q -O /usr/local/vesta/bin/v-wf-vulnerability-scan https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin/v-wf-vulnerability-scan
+    wget -q -O /usr/local/vesta/bin/v-wf-remediate https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin/v-wf-remediate
+    wget -q -O /usr/local/vesta/bin/v-wf-db-scan https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin/v-wf-db-scan
     chmod a+x /usr/local/vesta/bin/v-wf-malware-scan
     chmod a+x /usr/local/vesta/bin/v-wf-vulnerability-scan
     chmod a+x /usr/local/vesta/bin/v-wf-remediate
     chmod a+x /usr/local/vesta/bin/v-wf-db-scan
+    chmod a+x /usr/local/vesta/bin/v-wf-malware-hyperscan
     echo "==============================="
     echo "WordFence CLI is ready to use."
     echo "==============================="
