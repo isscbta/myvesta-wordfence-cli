@@ -86,7 +86,7 @@ install_wordfence_cli() {
         cd ~ && git clone https://github.com/wordfence/wordfence-cli.git
         cd ~/wordfence-cli
     fi
-    docker build -t wordfence-cli:latest .
+    docker build --no-cache -t wordfence-cli:latest .
     echo "= WordFence CLI installation completed."
 
     if [ ! -d "/root/wfcli-conf" ]; then
