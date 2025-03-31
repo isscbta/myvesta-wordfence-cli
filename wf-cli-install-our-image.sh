@@ -112,11 +112,13 @@ final_setup() {
     wget -q -O /usr/local/vesta/bin/v-wf-vulnerability-scan https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin/v-wf-vulnerability-scan
     wget -q -O /usr/local/vesta/bin/v-wf-remediate https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin/v-wf-remediate
     wget -q -O /usr/local/vesta/bin/v-wf-db-scan https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin/v-wf-db-scan
+    wget -q -O /usr/local/vesta/bin/v-wf-scan-path https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin/v-wf-scan-path
     chmod a+x /usr/local/vesta/bin/v-wf-malware-scan
     chmod a+x /usr/local/vesta/bin/v-wf-vulnerability-scan
     chmod a+x /usr/local/vesta/bin/v-wf-remediate
     chmod a+x /usr/local/vesta/bin/v-wf-db-scan
     chmod a+x /usr/local/vesta/bin/v-wf-malware-hyperscan
+    chmod a+x /usr/local/vesta/bin/v-wf-scan-path
     echo "==============================="
     echo "WordFence CLI is ready to use."
     echo "==============================="
@@ -128,6 +130,10 @@ final_setup() {
     echo "Use:"
     echo "v-wf-malware-hyperscan DOMAIN"
     echo "... for hyper malware scanning."
+    echo ""
+    echo "Use:"
+    echo "v-wf-scan-path /some/path"
+    echo "... for path scanning."
     echo ""
     echo "Use:"
     echo "v-wf-vulnerability-scan DOMAIN"
