@@ -39,7 +39,7 @@ install_docker() {
             apt-get install -y docker-buildx-plugin docker-compose-plugin
         else
             # Debian < 11
-            apt install apt-transport-https ca-certificates curl gnupg2 software-properties-common
+            apt install apt-transport-https ca-certificates curl gnupg2 software-properties-common lsb-release
             curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
             echo "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
             apt-get update > /dev/null 2>&1
