@@ -28,16 +28,22 @@ if [ -d /root/wordfence-cli ]; then
     cd /root/wordfence-cli
 fi
 
+if [ ! -d "/var/cache/wordfence" ]; then
+    mkdir -p /var/cache/wordfence
+fi
+
 # Run Wordfence scan using Docker
 docker run -it \
   -v /var/www:/var/www \
   -v /root/wfcli-conf/wordfence-cli.ini:/root/.config/wordfence/wordfence-cli.ini \
+  -v /var/cache/wordfence:/var/cache/wordfence \
   -v "$SCAN":"$SCAN" \
   wordfence-cli:latest \
   malware-scan "$SCAN" \
   --match-engine vectorscan \
   --output-format csv \
   --output-path "$OUTPUT_FILE" \
+  --cache-directory /var/cache/wordfence \
   "${@:2}"
 
 # Remove leftover containers
