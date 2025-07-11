@@ -32,6 +32,10 @@ if [ ! -d "/var/cache/wordfence" ]; then
     mkdir -p /var/cache/wordfence
 fi
 
+if [ -f "$OUTPUT_FILE" ]; then
+    rm "$OUTPUT_FILE"
+fi
+
 # Run Wordfence scan using Docker
 docker run -it \
   -v /var/www:/var/www \
