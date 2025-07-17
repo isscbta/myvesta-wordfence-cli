@@ -41,27 +41,42 @@ if [ -z "$SCANPATH" ]; then
 fi
 
 # Run Wordfence scan using Docker
+
 if [ ! -z "$cmin" ]; then
-    # Example: cmin=-60 v-wf-scan-path /home
-    # Example: cmin=-60 SCANPATH=/home/*/web v-wf-scan-path /home
-    find $SCANPATH -cmin $cmin -type f > $SCAN/last-modified-files.txt
-    docker run -it \
-        -v /var/www:/var/www \
-        -v /root/wfcli-conf/wordfence-cli.ini:/root/.config/wordfence/wordfence-cli.ini \
-        -v /var/cache/wordfence:/var/cache/wordfence \
-        -v $SCAN:$SCAN \
-        wordfence-cli:latest \
-        malware-scan $(cat $SCAN/last-modified-files.txt) \
-        --match-engine vectorscan \
-        --output-format csv \
-        --output-path "$OUTPUT_FILE" \
-        --cache-directory /var/cache/wordfence \
-        "${@:2}"
+    # scan only files that are created or modified in last N minutes
+    if [ -z "$all" ]; then
+        # only extensions that can be infected:
+        # Example: cmin=-1440 v-wf-scan-path /home
+        # Example: cmin=-1440 SCANPATH=/home/*/web v-wf-scan-path /home
+        find $SCANPATH -cmin $cmin -type f \( -name "*.php" -o -name "*.js" -o -name "*.htm" -o -name "*.html" \) -print0 | docker run -i \
+            -v /root/wfcli-conf/wordfence-cli.ini:/root/.config/wordfence/wordfence-cli.ini \
+            -v /var/cache/wordfence:/var/cache/wordfence \
+            -v $SCAN:$SCAN \
+            wordfence-cli:latest \
+            malware-scan \
+            --read-stdin \
+            --match-engine vectorscan \
+            --output-format csv \
+            --output-path "$OUTPUT_FILE"
+    else
+        # all extensions:
+        # Example: all=1 cmin=-1440 v-wf-scan-path /home
+        # Example: all=1 cmin=-1440 SCANPATH=/home/*/web v-wf-scan-path /home
+        find $SCANPATH -cmin $cmin -type f -print0 | docker run -i \
+            -v /root/wfcli-conf/wordfence-cli.ini:/root/.config/wordfence/wordfence-cli.ini \
+            -v /var/cache/wordfence:/var/cache/wordfence \
+            -v $SCAN:$SCAN \
+            wordfence-cli:latest \
+            malware-scan \
+            --read-stdin \
+            --match-engine vectorscan \
+            --output-format csv \
+            --output-path "$OUTPUT_FILE"
+    fi
 else
     # Example: v-wf-scan-path /home
     # Example: SCANPATH=/home/*/web v-wf-scan-path /home
     docker run -it \
-        -v /var/www:/var/www \
         -v /root/wfcli-conf/wordfence-cli.ini:/root/.config/wordfence/wordfence-cli.ini \
         -v /var/cache/wordfence:/var/cache/wordfence \
         -v $SCAN:$SCAN \
