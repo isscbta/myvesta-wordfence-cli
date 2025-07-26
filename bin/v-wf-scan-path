@@ -40,6 +40,18 @@ if [ -z "$SCANPATH" ]; then
     SCANPATH=$SCAN
 fi
 
+if [ ! -z "$cday" ]; then
+    # Example: cday=-1 v-wf-scan-path /home
+    # Example: cday=-1 SCANPATH=/home/*/web v-wf-scan-path /home
+    cmin=$((cday * 1440))
+fi
+
+if [ ! -z "$chour" ]; then
+    # Example: chour=-1 v-wf-scan-path /home
+    # Example: chour=-1 SCANPATH=/home/*/web v-wf-scan-path /home
+    cmin=$((chour * 60))
+fi
+
 # Run Wordfence scan using Docker
 
 if [ ! -z "$cmin" ]; then
