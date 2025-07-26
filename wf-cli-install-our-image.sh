@@ -149,6 +149,7 @@ final_setup() {
     echo "v-wf-db-scan DOMAIN"
     echo "... for scanning WordPress database"
     echo ""
+    echo ""
     echo "Append --progress, --banner, etc., at the end of the command to include additional parameters. A full list of parameters can be found on the WordFence CLI documentation page."
     echo ""
     echo "==============================="
