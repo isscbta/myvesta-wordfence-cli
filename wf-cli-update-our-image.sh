@@ -1,61 +1,94 @@
 #!/bin/bash
-
 set -e
 
+# Clear screen and print welcome message
+clear
 echo
-echo "======================================"
-echo " WordFence CLI Docker update"
-echo "======================================"
+echo "                __     __        _        "
+echo "  _ __ ___  _   \ \   / /__  ___| |_ __ _ "
+echo " | '_ \` _ \| | | \ \ / / _ \/ __| __/ _\` |"
+echo " | | | | | | |_| |\ V /  __/\__ \ || (_| |"
+echo " |_| |_| |_|\__, | \_/ \___||___/\__\__,_|"
+echo "            |___/                         "
+echo
+echo '          myVesta Control Panel           '
+echo -e "\n\n"
+
+echo 'Following software will be updated on your system:'
+echo '   - WordFence CLI'
 echo
 
-IMAGE_REMOTE="mycityhosting/wordfence-cli:with-vectorscan-amd64"
 IMAGE_LOCAL="wordfence-cli:latest"
 
-echo "= Starting WordFence CLI update..."
+# 1) Delete only WordFence containers (running + stopped)
+echo "= Removing WordFence CLI containers..."
+docker ps -a --format '{{.ID}} {{.Image}}' \
+  | awk '$2 ~ /^(wordfence-cli|mycityhosting\/wordfence-cli|isscbta\/wordfence-cli)(:|$)/ {print $1}' \
+  | xargs -r docker rm -f
 
-# --------------------------------------------------
-# 1. Stop and remove all old WordFence containers
-# --------------------------------------------------
-echo "= Removing old WordFence containers..."
+# 2) Delete only wordfence CLI images
+echo "= Removing WordFence CLI images..."
+docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' \
+  | awk '$1 ~ /^(wordfence-cli|mycityhosting\/wordfence-cli|isscbta\/wordfence-cli)(:|$)/ {print $2}' \
+  | sort -u \
+  | xargs -r docker rmi -f
 
-docker ps -a --filter "ancestor=${IMAGE_LOCAL}" -q | xargs -r docker rm -f
-docker ps -a --filter "ancestor=mycityhosting/wordfence-cli" -q | xargs -r docker rm -f
-docker ps -a --filter "ancestor=isscbta/wordfence-cli" -q | xargs -r docker rm -f
+# 3) Delete local folders
+echo "= Removing local WordFence folders..."
+rm -rf ~/wordfence-cli
+rm -rf ~/wfcli-conf
 
-# --------------------------------------------------
-# 2. Remove old WordFence images (safe, targeted)
-# --------------------------------------------------
-echo "= Removing old WordFence images..."
+# Install and configure WordFence CLI
+install_wordfence_cli() {
+    echo "= Starting WordFence CLI installation..."
 
-docker rmi -f isscbta/wordfence-cli:with-vectorscan-amd64 2>/dev/null || true
-docker rmi -f wordfence-cli:latest 2>/dev/null || true
+    # Pull the custom Wordfence CLI image with Vectorscan installed
+    echo "= Pulling WordFence CLI Docker image from Docker Hub..."
+    docker pull mycityhosting/wordfence-cli:with-vectorscan-amd64 || {
+        echo "- Failed to pull custom Wordfence CLI image."
+        exit 1
+    }
 
-# --------------------------------------------------
-# 3. Pull new image
-# --------------------------------------------------
-echo "= Pulling new WordFence CLI image..."
-docker pull "${IMAGE_REMOTE}"
+    # Tag the pulled image locally as 'wordfence-cli:latest'
+    docker tag mycityhosting/wordfence-cli:with-vectorscan-amd64 wordfence-cli:latest
 
-# --------------------------------------------------
-# 4. Retag as local latest
-# --------------------------------------------------
-echo "= Tagging image locally..."
-docker tag "${IMAGE_REMOTE}" "${IMAGE_LOCAL}"
+    echo "= WordFence CLI installation completed."
 
-# --------------------------------------------------
-# 5. Cleanup dangling Docker layers
-# --------------------------------------------------
-echo "= Cleaning dangling Docker layers..."
-docker image prune -f > /dev/null 2>&1
+    # Only configure if configuration directory doesn't exist
+    if [ ! -d "/root/wfcli-conf" ]; then
+        echo "= Starting WordFence CLI configuration..."
 
-# --------------------------------------------------
-# 6. Sanity check 
-# --------------------------------------------------
-echo "= Running sanity check..."
+        # Run 'configure' in an interactive container
+        docker run -it -v /var/www:/var/www wordfence-cli:latest configure
+
+        # Find the container that ran the 'configure' command
+        CONFCONTAINER=$(docker ps -a | grep 'wordfence configure' | head -n 1 | awk '{print $NF}')
+
+        docker start "$CONFCONTAINER"
+        CONFCONTENT=$(docker exec -it "$CONFCONTAINER" cat ~/.config/wordfence/wordfence-cli.ini)
+        docker stop "$CONFCONTAINER"
+
+        mkdir -p ~/wfcli-conf
+        echo "$CONFCONTENT" > ~/wfcli-conf/wordfence-cli.ini
+
+        if [ -s ~/wfcli-conf/wordfence-cli.ini ]; then
+            echo "= WordFence CLI configuration completed successfully."
+            cat ~/wfcli-conf/wordfence-cli.ini
+        else
+            echo "- WordFence CLI configuration failed. The configuration file is empty or missing."
+        fi
+    fi
+}
+
+# Main update process
+install_wordfence_cli
+
+# Sanity check
+echo "= Sanity check..."
 docker run --rm "${IMAGE_LOCAL}" version
 
 echo
-echo "======================================"
-echo " WordFence CLI update completed"
-echo "======================================"
+echo "==============================="
+echo "WordFence CLI update completed."
+echo "==============================="
 echo
