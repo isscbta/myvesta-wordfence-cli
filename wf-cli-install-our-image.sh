@@ -69,13 +69,13 @@ install_wordfence_cli() {
 
     # Pull the custom Wordfence CLI image with Vectorscan installed
     echo "= Pulling WordFence CLI Docker image from Docker Hub..."
-    docker pull isscbta/wordfence-cli:with-vectorscan-amd64 || {
+    docker pull mycityhosting/wordfence-cli:with-vectorscan-amd64 || {
         echo "- Failed to pull custom Wordfence CLI image."
         exit 1
     }
 
     # Tag the pulled image locally as 'wordfence-cli:latest'
-    docker tag isscbta/wordfence-cli:with-vectorscan-amd64 wordfence-cli:latest
+    docker tag mycityhosting/wordfence-cli:with-vectorscan-amd64 wordfence-cli:latest
 
     echo "= WordFence CLI installation completed."
 
