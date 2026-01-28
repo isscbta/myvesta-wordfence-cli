@@ -52,7 +52,7 @@ docker image prune -f > /dev/null 2>&1
 # 6. Sanity check 
 # --------------------------------------------------
 echo "= Running sanity check..."
-docker run --rm "${IMAGE_LOCAL}" version || true
+docker run --rm "${IMAGE_LOCAL}" version
 
 echo
 echo "======================================"
