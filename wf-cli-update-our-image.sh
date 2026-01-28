@@ -49,10 +49,10 @@ echo "= Cleaning dangling Docker layers..."
 docker image prune -f > /dev/null 2>&1
 
 # --------------------------------------------------
-# 6. Sanity check (non-fatal)
+# 6. Sanity check 
 # --------------------------------------------------
 echo "= Running sanity check..."
-docker run --rm "${IMAGE_LOCAL}" wordfence version || true
+docker run --rm "${IMAGE_LOCAL}" version || true
 
 echo
 echo "======================================"
