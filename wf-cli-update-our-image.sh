@@ -20,6 +20,7 @@ echo
 
 IMAGE_LOCAL="wordfence-cli:latest"
 
+wait_to_press_enter=1
 function press_enter {
     if [ $wait_to_press_enter -eq 1 ]; then
         read -p "$1"
