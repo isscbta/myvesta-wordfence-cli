@@ -20,6 +20,14 @@ echo
 
 IMAGE_LOCAL="wordfence-cli:latest"
 
+function press_enter {
+    if [ $wait_to_press_enter -eq 1 ]; then
+        read -p "$1"
+    else
+        echo $1
+    fi
+}
+
 # 1) Delete only WordFence containers (running + stopped)
 echo "= Removing WordFence CLI containers..."
 docker ps -a --format '{{.ID}} {{.Image}}' \
@@ -37,6 +45,9 @@ docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' \
 echo "= Removing local WordFence folders..."
 rm -rf ~/wordfence-cli
 rm -rf ~/wfcli-conf
+rm -rf ~/myvesta-wordfence-cli
+
+press_enter "=== Press enter to download the latest myVesta WordFence CLI image ======================="
 
 # Install and configure WordFence CLI
 install_wordfence_cli() {
