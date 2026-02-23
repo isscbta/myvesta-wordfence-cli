@@ -86,6 +86,9 @@ install_wordfence_cli() {
         cd ~ && git clone https://github.com/wordfence/wordfence-cli.git
         cd ~/wordfence-cli
     fi
+    if ! grep -q 'ENV DEBIAN_FRONTEND=noninteractive' Dockerfile; then
+        sed -i '2iENV DEBIAN_FRONTEND=noninteractive' Dockerfile
+    fi
     if ! grep -q 'libvectorscan5' Dockerfile; then
         echo "= Adding libvectorscan5 to Dockerfile"
         sed -i "s|libpcre3|libpcre3 libvectorscan5|g" Dockerfile
