@@ -87,11 +87,16 @@ install_wordfence_cli() {
         cd ~/wordfence-cli
     fi
     if ! grep -q 'ENV DEBIAN_FRONTEND=noninteractive' Dockerfile; then
+        echo "= Adding ENV DEBIAN_FRONTEND=noninteractive to Dockerfile"
         sed -i '2iENV DEBIAN_FRONTEND=noninteractive' Dockerfile
+    fi
+    if grep -q 'libpcre3' Dockerfile; then
+        echo "= Replacing libpcre3 to libpcre2-8-0 in Dockerfile"
+        sed -i "s|libpcre3|libpcre2-8-0|g" Dockerfile
     fi
     if ! grep -q 'libvectorscan5' Dockerfile; then
         echo "= Adding libvectorscan5 to Dockerfile"
-        sed -i "s|libpcre3|libpcre3 libvectorscan5|g" Dockerfile
+        sed -i "s|libvectorscan5 libpcre|libpcre|g" Dockerfile
     fi
     docker build --no-cache -t wordfence-cli:latest .
     echo "= WordFence CLI installation completed."
