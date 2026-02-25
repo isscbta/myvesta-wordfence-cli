@@ -19,13 +19,16 @@ echo '   - WordFence CLI'
 echo
 
 IMAGE_LOCAL="wordfence-cli:latest"
+REPO_REMOTE="mycityhosting/wordfence-cli"
+DEFAULT_REMOTE_TAG="with-vectorscan-latest"
+TAG_FILTER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+-with-vectorscan-amd64$'
 
 wait_to_press_enter=1
 function press_enter {
     if [ $wait_to_press_enter -eq 1 ]; then
         read -p "$1"
     else
-        echo $1
+        echo "$1"
     fi
 }
 
@@ -48,21 +51,83 @@ rm -rf ~/wordfence-cli
 rm -rf ~/wfcli-conf
 rm -rf ~/myvesta-wordfence-cli
 
-press_enter "=== Press enter to download the latest myVesta WordFence CLI image ======================="
+press_enter "=== Press Enter to download and install Wordfence CLI (you can select a version) ==="
+
+fetch_remote_tags() {
+  # Docker Hub v2 tags endpoint
+  # Note: Docker Hub may paginate, but for a small number of tags this is fine.
+  local url="https://hub.docker.com/v2/repositories/${REPO_REMOTE}/tags?page_size=100"
+
+  if command -v jq >/dev/null 2>&1; then
+    curl -fsSL "$url" | jq -r '.results[].name'
+  else
+    # Fallback without jq: extract "name":"..."
+    curl -fsSL "$url" \
+      | grep -oE '"name"\s*:\s*"[^"]+"' \
+      | sed -E 's/.*"name"\s*:\s*"([^"]+)".*/\1/'
+  fi
+}
+
+choose_remote_tag_interactive() {
+  local tags filtered
+
+  tags="$(fetch_remote_tags || true)"
+  if [ -z "$tags" ]; then
+    echo "- Unable to fetch tags from Docker Hub, falling back to default: ${DEFAULT_REMOTE_TAG}" >&2
+    echo "${DEFAULT_REMOTE_TAG}"
+    return 0
+  fi
+
+  filtered="$(echo "$tags" | grep -E "${TAG_FILTER_REGEX}" | sort -Vr || true)"
+
+  echo >&2
+  echo "=== Select Wordfence CLI image tag to install ===" >&2
+
+  local options=("${DEFAULT_REMOTE_TAG} (recommended, always latest)")
+  while IFS= read -r t; do
+    [ -z "$t" ] && continue
+    options+=("$t")
+  done <<< "$filtered"
+
+  if [ "${#options[@]}" -le 1 ]; then
+    echo "- No versioned tags found, using default: ${DEFAULT_REMOTE_TAG}" >&2
+    echo "${DEFAULT_REMOTE_TAG}"
+    return 0
+  fi
+
+  PS3="Choose an option (1-${#options[@]}): "
+  select opt in "${options[@]}"; do
+    if [ -z "$opt" ]; then
+      echo "- Invalid selection, try again." >&2
+      continue
+    fi
+
+    if [ "$REPLY" -eq 1 ]; then
+      echo "${DEFAULT_REMOTE_TAG}"
+      return 0
+    fi
+
+    echo "$opt"
+    return 0
+  done
+}
 
 # Install and configure WordFence CLI
 install_wordfence_cli() {
     echo "= Starting WordFence CLI installation..."
 
-    # Pull the custom Wordfence CLI image with Vectorscan installed
-    echo "= Pulling WordFence CLI Docker image from Docker Hub..."
-    docker pull mycityhosting/wordfence-cli:with-vectorscan-amd64 || {
-        echo "- Failed to pull custom Wordfence CLI image."
+    # Choose a tag (latest or a pinned version)
+    REMOTE_TAG="$(choose_remote_tag_interactive | tr -d '\r' | xargs)"
+    IMAGE_REMOTE="${REPO_REMOTE}:${REMOTE_TAG}"
+
+    echo "= Pulling Wordfence CLI Docker image: ${IMAGE_REMOTE} ..."
+    docker pull "${IMAGE_REMOTE}" || {
+        echo "- Failed to pull Wordfence CLI image: ${IMAGE_REMOTE}"
         exit 1
     }
 
     # Tag the pulled image locally as 'wordfence-cli:latest'
-    docker tag mycityhosting/wordfence-cli:with-vectorscan-amd64 wordfence-cli:latest
+    docker tag "${IMAGE_REMOTE}" "${IMAGE_LOCAL}"
 
     echo "= WordFence CLI installation completed."
 
@@ -70,11 +135,11 @@ install_wordfence_cli() {
     if [ ! -d "/root/wfcli-conf" ]; then
         echo "= Starting WordFence CLI configuration..."
 
-        # Run 'configure' in an interactive container
-        docker run -it -v /var/www:/var/www wordfence-cli:latest configure
+    # Run 'configure' in an interactive container
+    docker run -it -v /var/www:/var/www wordfence-cli:latest configure
 
-        # Find the container that ran the 'configure' command
-        CONFCONTAINER=$(docker ps -a | grep 'wordfence configure' | head -n 1 | awk '{print $NF}')
+    # Get the last created container (more reliable than grepping)
+    CONFCONTAINER="$(docker ps -aq --latest)"
 
         docker start "$CONFCONTAINER"
         CONFCONTENT=$(docker exec -it "$CONFCONTAINER" cat ~/.config/wordfence/wordfence-cli.ini)
@@ -97,7 +162,9 @@ install_wordfence_cli
 
 # Sanity check
 echo "= Sanity check..."
-docker run --rm "${IMAGE_LOCAL}" version
+docker run --rm "${IMAGE_LOCAL}" --version 2>/dev/null \
+  || docker run --rm "${IMAGE_LOCAL}" version 2>/dev/null \
+  || docker run --rm "${IMAGE_LOCAL}" --help | head -n 20
 
 echo
 echo "==============================="
