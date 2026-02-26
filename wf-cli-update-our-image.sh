@@ -31,6 +31,16 @@ function press_enter {
     fi
 }
 
+ask_yes_no() {
+  local prompt="$1"
+  local answer
+  read -r -p "$prompt [y/N]: " answer
+  case "$answer" in
+    y|Y|yes|YES|Yes) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # 1) Delete only WordFence containers (running + stopped)
 echo "= Removing WordFence CLI containers..."
 docker ps -a --format '{{.ID}} {{.Image}}' \
@@ -104,6 +114,37 @@ choose_remote_tag_interactive() {
   done
 }
 
+update_vesta_commands() {
+  echo "= Updating myVesta Wordfence CLI command scripts..."
+
+  local base="https://raw.githubusercontent.com/isscbta/myvesta-wordfence-cli/refs/heads/main/bin"
+  local dest="/usr/local/vesta/bin"
+
+  # List of command scripts to update
+  local files=(
+    "v-wf-malware-scan"
+    "v-wf-malware-hyperscan"
+    "v-wf-vulnerability-scan"
+    "v-wf-remediate"
+    "v-wf-db-scan"
+    "v-wf-scan-path"
+    "v-wf-malware-hyperscan-with-remediate"
+  )
+
+  for f in "${files[@]}"; do
+    echo "  - Updating ${dest}/${f}"
+    wget -q -O "${dest}/${f}.tmp" "${base}/${f}" || {
+      echo "- Failed to download ${base}/${f}"
+      rm -f "${dest}/${f}.tmp"
+      exit 1
+    }
+    mv -f "${dest}/${f}.tmp" "${dest}/${f}"
+    chmod a+x "${dest}/${f}"
+  done
+
+  echo "= Command scripts updated."
+}
+
 # Install and configure WordFence CLI
 install_wordfence_cli() {
     echo "= Starting WordFence CLI installation..."
@@ -151,6 +192,12 @@ install_wordfence_cli() {
 
 # Main update process
 install_wordfence_cli
+
+if ask_yes_no "Update myVesta Wordfence CLI command scripts (v-wf-*) as well?"; then
+  update_vesta_commands
+else
+  echo "= Skipping command scripts update."
+fi
 
 # Sanity check
 echo "= Sanity check..."
