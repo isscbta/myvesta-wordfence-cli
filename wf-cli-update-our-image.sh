@@ -20,8 +20,7 @@ echo
 
 IMAGE_LOCAL="wordfence-cli:latest"
 REPO_REMOTE="mycityhosting/wordfence-cli"
-DEFAULT_REMOTE_TAG="with-vectorscan-latest"
-TAG_FILTER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+-with-vectorscan-amd64$'
+TAG_FILTER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-r[0-9]+)?$'
 
 wait_to_press_enter=1
 function press_enter {
@@ -73,27 +72,26 @@ choose_remote_tag_interactive() {
 
   tags="$(fetch_remote_tags || true)"
   if [ -z "$tags" ]; then
-    echo "- Unable to fetch tags from Docker Hub, falling back to default: ${DEFAULT_REMOTE_TAG}" >&2
-    echo "${DEFAULT_REMOTE_TAG}"
-    return 0
+    echo "- Unable to fetch tags from Docker Hub." >&2
+    exit 1
   fi
 
+  # Only versioned tags, newest first
   filtered="$(echo "$tags" | grep -E "${TAG_FILTER_REGEX}" | sort -Vr || true)"
 
-  echo >&2
-  echo "=== Select Wordfence CLI image tag to install ===" >&2
+  if [ -z "$filtered" ]; then
+    echo "- No versioned tags found on Docker Hub that match: ${TAG_FILTER_REGEX}" >&2
+    exit 1
+  fi
 
-  local options=("${DEFAULT_REMOTE_TAG} (recommended, always latest)")
+  echo >&2
+  echo "=== Select Wordfence CLI image tag to install (newest is first) ===" >&2
+
+  local options=()
   while IFS= read -r t; do
     [ -z "$t" ] && continue
     options+=("$t")
   done <<< "$filtered"
-
-  if [ "${#options[@]}" -le 1 ]; then
-    echo "- No versioned tags found, using default: ${DEFAULT_REMOTE_TAG}" >&2
-    echo "${DEFAULT_REMOTE_TAG}"
-    return 0
-  fi
 
   PS3="Choose an option (1-${#options[@]}): "
   select opt in "${options[@]}"; do
@@ -101,12 +99,6 @@ choose_remote_tag_interactive() {
       echo "- Invalid selection, try again." >&2
       continue
     fi
-
-    if [ "$REPLY" -eq 1 ]; then
-      echo "${DEFAULT_REMOTE_TAG}"
-      return 0
-    fi
-
     echo "$opt"
     return 0
   done
