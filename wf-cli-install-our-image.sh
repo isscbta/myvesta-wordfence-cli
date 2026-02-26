@@ -16,6 +16,55 @@ echo 'Following software will be installed on your system:'
 echo '   - WordFence CLI'
 
 CURDIR=$(pwd)
+REPO_REMOTE="mycityhosting/wordfence-cli"
+TAG_FILTER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-r[0-9]+)?$'
+
+fetch_remote_tags() {
+  local url="https://hub.docker.com/v2/repositories/${REPO_REMOTE}/tags?page_size=100"
+
+  if command -v jq >/dev/null 2>&1; then
+    curl -fsSL "$url" | jq -r '.results[].name'
+  else
+    curl -fsSL "$url" \
+      | grep -oE '"name"\s*:\s*"[^"]+"' \
+      | sed -E 's/.*"name"\s*:\s*"([^"]+)".*/\1/'
+  fi
+}
+
+choose_remote_tag_interactive() {
+  local tags filtered options
+
+  tags="$(fetch_remote_tags || true)"
+  if [ -z "$tags" ]; then
+    echo "- Unable to fetch tags from Docker Hub." >&2
+    exit 1
+  fi
+
+  filtered="$(echo "$tags" | grep -E "${TAG_FILTER_REGEX}" | sort -Vr || true)"
+  if [ -z "$filtered" ]; then
+    echo "- No versioned tags found on Docker Hub that match: ${TAG_FILTER_REGEX}" >&2
+    exit 1
+  fi
+
+  echo
+  echo "=== Select Wordfence CLI image tag to install (newest is first) ==="
+
+  options=()
+  while IFS= read -r t; do
+    [ -z "$t" ] && continue
+    options+=("$t")
+  done <<< "$filtered"
+
+  PS3="Choose an option (1-${#options[@]}): "
+  select opt in "${options[@]}"; do
+    if [ -z "$opt" ]; then
+      echo "- Invalid selection, try again." >&2
+      continue
+    fi
+    echo "$opt"
+    return 0
+  done
+}
 
 # Function to install Docker
 install_docker() {
@@ -67,15 +116,16 @@ install_docker() {
 install_wordfence_cli() {
     echo "= Starting WordFence CLI installation..."
 
-    # Pull the custom Wordfence CLI image with Vectorscan installed
-    echo "= Pulling WordFence CLI Docker image from Docker Hub..."
-    docker pull mycityhosting/wordfence-cli:with-vectorscan-amd64 || {
-        echo "- Failed to pull custom Wordfence CLI image."
-        exit 1
+    REMOTE_TAG="$(choose_remote_tag_interactive | tr -d '\r' | xargs)"
+    IMAGE_REMOTE="${REPO_REMOTE}:${REMOTE_TAG}"
+
+    echo "= Pulling Wordfence CLI Docker image: ${IMAGE_REMOTE} ..."
+    docker pull "${IMAGE_REMOTE}" || {
+       echo "- Failed to pull Wordfence CLI image: ${IMAGE_REMOTE}"
+       exit 1
     }
 
-    # Tag the pulled image locally as 'wordfence-cli:latest'
-    docker tag mycityhosting/wordfence-cli:with-vectorscan-amd64 wordfence-cli:latest
+    docker tag "${IMAGE_REMOTE}" wordfence-cli:latest
 
     echo "= WordFence CLI installation completed."
 
