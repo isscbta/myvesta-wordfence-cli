@@ -149,8 +149,19 @@ update_vesta_commands() {
 install_wordfence_cli() {
     echo "= Starting WordFence CLI installation..."
 
-    # Choose a tag (latest or a pinned version)
-    REMOTE_TAG="$(choose_remote_tag_interactive | tr -d '\r' | xargs)"
+    # Choose a tag (latest or a pinned version); grep keeps only valid version lines on stdout.
+    REMOTE_TAG="$(
+      choose_remote_tag_interactive \
+        | tr -d '\r' \
+        | grep -E "${TAG_FILTER_REGEX}" \
+        | tail -n1 \
+        | xargs
+    )"
+    if [ -z "$REMOTE_TAG" ]; then
+        echo "- Failed to determine Wordfence CLI image tag." >&2
+        exit 1
+    fi
+
     IMAGE_REMOTE="${REPO_REMOTE}:${REMOTE_TAG}"
 
     echo "= Pulling Wordfence CLI Docker image: ${IMAGE_REMOTE} ..."

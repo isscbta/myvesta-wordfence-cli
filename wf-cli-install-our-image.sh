@@ -16,6 +16,7 @@ echo 'Following software will be installed on your system:'
 echo '   - WordFence CLI'
 
 CURDIR=$(pwd)
+IMAGE_LOCAL="wordfence-cli:latest"
 REPO_REMOTE="mycityhosting/wordfence-cli"
 TAG_FILTER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-r[0-9]+)?$'
 
@@ -116,7 +117,20 @@ install_docker() {
 install_wordfence_cli() {
     echo "= Starting WordFence CLI installation..."
 
-    REMOTE_TAG="$(choose_remote_tag_interactive | tr -d '\r' | xargs)"
+    # Pick only a line that looks like a version tag (same idea as wf-cli-update-our-image.sh;
+    # avoids broken image refs if anything non-tag leaks to stdout).
+    REMOTE_TAG="$(
+      choose_remote_tag_interactive \
+        | tr -d '\r' \
+        | grep -E "${TAG_FILTER_REGEX}" \
+        | tail -n1 \
+        | xargs
+    )"
+    if [ -z "$REMOTE_TAG" ]; then
+      echo "- Failed to determine Wordfence CLI image tag." >&2
+      exit 1
+    fi
+
     IMAGE_REMOTE="${REPO_REMOTE}:${REMOTE_TAG}"
 
     echo "= Pulling Wordfence CLI Docker image: ${IMAGE_REMOTE} ..."
@@ -125,7 +139,7 @@ install_wordfence_cli() {
        exit 1
     }
 
-    docker tag "${IMAGE_REMOTE}" wordfence-cli:latest
+    docker tag "${IMAGE_REMOTE}" "${IMAGE_LOCAL}"
 
     echo "= WordFence CLI installation completed."
 
@@ -134,10 +148,10 @@ install_wordfence_cli() {
         echo "= Starting WordFence CLI configuration..."
 
         # Run 'configure' in an interactive container
-        docker run -it -v /var/www:/var/www wordfence-cli:latest configure
+        docker run -it -v /var/www:/var/www "${IMAGE_LOCAL}" configure
 
-        # Find the container that ran the 'configure' command
-        CONFCONTAINER=$(docker ps -a | grep 'wordfence configure' | head -n 1 | awk '{print $NF}')
+        # Last created container (more reliable than grepping)
+        CONFCONTAINER="$(docker ps -aq --latest)"
 
         docker start "$CONFCONTAINER"
         CONFCONTENT=$(docker exec -it "$CONFCONTAINER" cat ~/.config/wordfence/wordfence-cli.ini)
