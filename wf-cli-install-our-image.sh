@@ -46,8 +46,8 @@ choose_remote_tag_interactive() {
     exit 1
   fi
 
-  echo
-  echo "=== Select Wordfence CLI image tag to install (newest is first) ==="
+  echo >&2
+  echo "=== Select Wordfence CLI image tag to install (newest is first) ===" >&2
 
   options=()
   while IFS= read -r t; do
